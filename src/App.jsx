@@ -42,6 +42,13 @@ const SUPPORT_TIERS = {
 const FIRST_NAMES = ["Le", "Ko", "Mi", "Sha", "Ste", "Ke", "Ti", "Ka", "Ky", "Ja", "Lu", "Gian", "Jo", "Chris", "Ant", "Dwi", "Dir", "Ha", "Wil", "Bil", "Mag", "Lar", "Kar", "Osc", "Jer", "Dav", "Pat", "Al", "Reg", "Den", "Sco", "Bar", "Vin", "Tra", "Zio", "De", "Jay", "Ty"];
 const LAST_NAMES = ["Bron", "Bry", "Jor", "One", "Cur", "Dur", "Dun", "Mal", "Irv", "Mor", "Don", "Nis", "Embi", "Pau", "Dav", "How", "Now", "Keem", "Cham", "Rus", "Joh", "Bir", "Jab", "Rob", "Wes", "Rob", "Ew", "Iv", "Mil", "Rod", "Pip", "Key", "Car", "You", "Wil", "Mar", "Roz", "Fox"];
 
+const PLAYER_IMAGES = [
+  "https://api.dicebear.com/9.x/pixel-art/svg?seed=Hoops1&backgroundColor=b6e3f4,c0aede,d1d4f9",
+  "https://api.dicebear.com/9.x/pixel-art/svg?seed=Hoops2&backgroundColor=ffdfbf,ffd5dc,d1d4f9"
+];
+
+const FALLBACK_IMAGE = "https://cdn-icons-png.flaticon.com/512/10709/10709766.png"; 
+
 // Helper for consistent identity
 const getPlayerIdentity = (index) => {
   const f = FIRST_NAMES[index % FIRST_NAMES.length];
@@ -50,15 +57,12 @@ const getPlayerIdentity = (index) => {
   return { name: `${f}${l.toLowerCase()}`, seed };
 };
 
-// Used for Draft Board
 const DRAFT_BOARD_SIZE = 30;
-
 const MAX_LEVEL = 100;
 const TOTAL_PLAYERS_PER_TIER = 35;
 
 // --- UTILITY FUNCTIONS ---
 
-// Image Generators
 const getPlayerImage = (seed) => `https://api.dicebear.com/9.x/pixel-art/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
 const getGMImage = (seed) => `https://api.dicebear.com/9.x/avataaars/svg?seed=${seed}&backgroundColor=transparent`;
 
@@ -87,7 +91,7 @@ const generateCard = (rarityKey, forcedIndex = null) => {
     stats,
     maxStats: { ...stats },
     isLocked: false,
-    proStatus: null // null, 'silver', 'gold'
+    proStatus: null 
   };
 };
 
@@ -138,21 +142,18 @@ const getLevelUpReq = (rarityKey, currentLevel) => {
 };
 
 const calculateCurrentStats = (card, activeSupports = []) => {
-  // 1. Base Level Growth
-  const baseMultiplier = 1 + (card.level * 0.05); // 5% per level
-  const specialtyMultiplier = 1 + (card.level * 0.10); // 10% per level for specialty
+  const baseMultiplier = 1 + (card.level * 0.05); 
+  const specialtyMultiplier = 1 + (card.level * 0.10); 
 
-  // 2. Pro Bonus
   let proMultiplier = 1;
   if (card.proStatus === 'silver') proMultiplier = 2;
-  if (card.proStatus === 'gold') proMultiplier = 2.36; // 2 * 1.18
+  if (card.proStatus === 'gold') proMultiplier = 2.36; 
 
   const current = {};
   STAT_TYPES.forEach(stat => {
     let val = card.maxStats[stat] * (stat === card.specialty ? specialtyMultiplier : baseMultiplier);
     val = val * proMultiplier;
     
-    // 3. Support Bonus
     if (activeSupports && activeSupports.length > 0) {
         activeSupports.forEach(supp => {
             if (supp && supp.stat === stat) {
@@ -166,10 +167,7 @@ const calculateCurrentStats = (card, activeSupports = []) => {
   return current;
 };
 
-// Tier Calculation Logic
 const calculatePlayerTier = (deck, inventory) => {
-    // Calculate "Deck Score"
-    // Rarity(0-9) * 100 + Level + ProBonus(Silver=200, Gold=400)
     if (!deck || deck.length === 0) return { name: 'Rookie', progress: 0, next: 'Silver' };
 
     const deckCards = deck.map(id => inventory.find(c => c.id === id)).filter(Boolean);
@@ -178,7 +176,7 @@ const calculatePlayerTier = (deck, inventory) => {
     const totalScore = deckCards.reduce((acc, card) => {
         const rVal = RARITIES[card.rarity].id;
         let score = (rVal * 100) + card.level;
-        if (card.proStatus === 'silver') score += 200; // Equivalent to jumping 2 tiers roughly
+        if (card.proStatus === 'silver') score += 200; 
         if (card.proStatus === 'gold') score += 450;
         return acc + score;
     }, 0);
@@ -221,10 +219,8 @@ const calculatePlayerTier = (deck, inventory) => {
 // --- COMPONENTS ---
 
 const Card = ({ card, size = "md", onClick, isSelected, showStats = true, dim = false, isLocked = false, activeSupports }) => {
-  if (!card || (card && card.type === 'SUPPORT')) return null; // Don't render support cards as player cards
-  
+  if (!card || (card && card.type === 'SUPPORT')) return null; 
   const rarity = RARITIES[card.rarity];
-  // Fallback for rarity to prevent crashes on old data
   if (!rarity) return null;
 
   const currentStats = calculateCurrentStats(card, activeSupports);
@@ -250,13 +246,11 @@ const Card = ({ card, size = "md", onClick, isSelected, showStats = true, dim = 
         ${isLocked ? 'grayscale brightness-50' : ''}
       `}
     >
-      {/* Header */}
       <div className="bg-black/60 p-0.5 flex justify-between items-center z-10 backdrop-blur-sm">
         <span className={`font-bold text-white truncate w-2/3 leading-none`}>{card.name}</span>
         {!isLocked && <span className="text-white font-mono text-[7px] leading-none">{totalStats}</span>}
       </div>
 
-      {/* Portrait */}
       <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
          <img 
             src={imageSrc} 
@@ -267,7 +261,6 @@ const Card = ({ card, size = "md", onClick, isSelected, showStats = true, dim = 
          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
       </div>
 
-      {/* Pro Stars */}
       {!isLocked && card.proStatus && (
           <div className="absolute top-10 left-1 z-20 drop-shadow-lg">
               {card.proStatus === 'silver' && <div className="text-gray-300"><Star size={16} fill="silver" stroke="white" /></div>}
@@ -275,28 +268,24 @@ const Card = ({ card, size = "md", onClick, isSelected, showStats = true, dim = 
           </div>
       )}
 
-      {/* Specialty Indicator */}
       {!isLocked && card.specialty && (
          <div className={`absolute top-5 left-0.5 z-20 w-4 h-4 rounded-full ${SPECIALTY_COLORS[card.specialty]} border border-white flex items-center justify-center shadow-md`}>
              <span className="text-[6px] font-bold text-white uppercase">{card.specialty.substring(0,1)}</span>
          </div>
       )}
 
-      {/* Position Indicator */}
       {!isLocked && card.position && (
          <div className={`absolute top-5 right-0.5 z-20 bg-black/80 text-white px-1 rounded text-[6px] font-bold border border-white/30`}>
              {card.position}
          </div>
       )}
 
-      {/* Locked Overlay */}
       {isLocked && (
           <div className="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black/40">
               <Lock className="text-gray-400 mb-1 w-4 h-4" />
           </div>
       )}
 
-      {/* Level Badge */}
       {!isLocked && (
         <div className="absolute top-8 right-0.5 z-10 bg-black/70 text-white px-1 rounded text-[6px] font-mono border border-white/20">
             L{card.level}
@@ -309,12 +298,10 @@ const Card = ({ card, size = "md", onClick, isSelected, showStats = true, dim = 
         </div>
       )}
 
-      {/* Rarity Label */}
       <div className="bg-black/80 text-center py-0.5 z-10 mt-auto">
          <span className={`block font-bold leading-none ${rarity.text || 'text-' + rarity.color.split('-')[2] + '-300'}`}>{rarity.name.toUpperCase()}</span>
       </div>
 
-      {/* Stats Grid */}
       {showStats && !isLocked && (
         <div className="bg-white/95 p-0.5 grid grid-cols-2 gap-x-0.5 gap-y-0 text-black font-bold text-[7px] leading-none z-10">
           {Object.entries(currentStats).map(([k,v]) => (
@@ -415,9 +402,7 @@ const CatalogueView = ({ player, selectedCard, setSelectedCard, trainCard, combi
         return cardsToShow;
     }, [player.inventory, rarityFilter]);
 
-    // Safety check to prevent rendering malformed card data (e.g. from Deck Edit)
     if (selectedCard && !selectedCard.maxStats && selectedCard.type !== 'SUPPORT') {
-        // This ensures we don't try to render stats for an invalid card object
         return (
             <div className="flex flex-col h-full p-4 text-white text-center">
                 Loading Card Data...
@@ -473,7 +458,6 @@ const CatalogueView = ({ player, selectedCard, setSelectedCard, trainCard, combi
                                         : <Button className="w-full bg-gray-600" disabled>MAX LEVEL</Button>
                                     }
                                     
-                                    {/* Combine Logic */}
                                     {player.inventory.filter(c => c.rarity === selectedCard.rarity && c.playerId === selectedCard.playerId).length > 1 && (
                                         <Button className="w-full" variant="gold" onClick={() => combineCard(selectedCard)}>
                                             COMBINE (PRO)
@@ -585,36 +569,33 @@ export default function HoopsLegends() {
   const [gameState, setGameState] = useState('LOADING'); 
   const [player, setPlayer] = useState({ 
       name: '', coins: 0, inventory: [], deck: [], 
-      supportInventory: [], activeSupport: [], // New Support Logic
+      supportInventory: [], activeSupport: [], 
       tutorialStep: 0, record: { wins: 0, losses: 0 } 
   });
   const [battleState, setBattleState] = useState(null); 
   const [selectedCard, setSelectedCard] = useState(null); 
   const [packResult, setPackResult] = useState(null); 
   const [opponents, setOpponents] = useState([]); 
-  const [draftBoard, setDraftBoard] = useState(null); // Post-match reward
+  const [draftBoard, setDraftBoard] = useState(null); 
 
   useEffect(() => {
     const saved = localStorage.getItem('hoopsLegendsSave');
     if (saved) {
       try {
           const loaded = JSON.parse(saved);
-          // Migration for old saves
           if (!loaded.record) loaded.record = { wins: 0, losses: 0 };
           if (!loaded.supportInventory) loaded.supportInventory = [];
           if (!loaded.activeSupport) loaded.activeSupport = [];
-          // Ensure inventory items have new fields if needed
           loaded.inventory = loaded.inventory.map(c => ({
               ...c,
-              proStatus: c.proStatus || null, // Ensure proStatus exists
-              specialty: c.specialty || 'OFF', // Fallback
-              position: c.position || 'PG' // Fallback
+              proStatus: c.proStatus || null, 
+              specialty: c.specialty || 'OFF', 
+              position: c.position || 'PG' 
           }));
           setPlayer(loaded);
           setGameState('MENU');
       } catch (e) {
           console.error("Save file corrupted", e);
-          // Fallback to start if save is bad
           setGameState('START');
       }
     } else {
@@ -624,14 +605,11 @@ export default function HoopsLegends() {
 
   useEffect(() => { if (player.name) localStorage.setItem('hoopsLegendsSave', JSON.stringify(player)); }, [player]);
 
-  // Clear selected card when changing screens to avoid layout issues
   useEffect(() => {
       setSelectedCard(null);
   }, [gameState]);
 
   const tierInfo = useMemo(() => calculatePlayerTier(player.deck, player.inventory), [player.deck, player.inventory]);
-
-  // --- CORE ACTIONS ---
 
   const handleClosePack = () => {
     setPackResult(null);
@@ -666,7 +644,7 @@ export default function HoopsLegends() {
     if (type === 'NORMAL') { cost = 100; odds = [0.90, 0.09, 0.01, 0, 0, 0, 0, 0, 0, 0]; }
     else if (type === 'SUPER') { cost = 600; odds = [0.60, 0.30, 0.08, 0.02, 0, 0, 0, 0, 0, 0]; }
     else if (type === 'ULTRA') { cost = 1500; odds = [0, 0.50, 0.35, 0.10, 0.04, 0.01, 0, 0, 0, 0]; }
-    else if (type === 'GOD') { cost = 5000; odds = [0, 0, 0, 0, 0.70, 0.20, 0.08, 0.02, 0, 0]; guaranteedTier = 4; } // Ruby base
+    else if (type === 'GOD') { cost = 5000; odds = [0, 0, 0, 0, 0.70, 0.20, 0.08, 0.02, 0, 0]; guaranteedTier = 4; } 
 
     if (player.coins < cost) { alert("Not enough coins!"); return; }
 
@@ -680,7 +658,6 @@ export default function HoopsLegends() {
       if (roll <= cumulative) { selectedRarity = rarityKeys[i]; break; }
     }
     
-    // Support card chance (10%) if not God Pack
     let newItem;
     if (type !== 'GOD' && Math.random() < 0.1) {
         newItem = generateSupportCard(Math.random() > 0.8 ? 'RARE' : 'COMMON');
@@ -693,7 +670,6 @@ export default function HoopsLegends() {
   };
 
   const combineCard = (targetCard) => {
-      // Find a duplicate
       const dupe = player.inventory.find(c => c.id !== targetCard.id && c.rarity === targetCard.rarity && c.playerId === targetCard.playerId);
       if (!dupe) return;
 
@@ -770,12 +746,8 @@ export default function HoopsLegends() {
     return newCard;
   };
 
-  // --- BATTLE LOGIC ---
-
   const enterBattleSelection = () => {
-      const playerPower = tierInfo.score || 100; // Approximate power
-      // Generate AI Opponents based on player tier, but slightly nerfed for 78% win rate
-      // To ensure high win rate, AI deck average level should be ~85-90% of player
+      const playerPower = tierInfo.score || 100; 
       
       const newOpponents = Array.from({length: 3}).map((_, i) => {
           const name = `GM ${FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)]}`;
@@ -784,7 +756,6 @@ export default function HoopsLegends() {
               record: { wins: Math.floor(Math.random()*50), losses: Math.floor(Math.random()*50) },
               deck: Array.from({length: 5}).map(() => {
                   const card = generateCard(Object.keys(RARITIES)[Math.min(9, Math.floor(tierInfo.progress/100))]); 
-                  // Nerf AI levels slightly
                   const deckAvgLvl = player.deck.reduce((a,b)=> a + (player.inventory.find(c=>c.id===b)?.level||0), 0) / 5;
                   card.level = Math.max(0, Math.floor(deckAvgLvl * 0.85)); 
                   return card;
@@ -798,11 +769,10 @@ export default function HoopsLegends() {
   const generateDraftBoard = (isWin) => {
       const picks = isWin ? 4 : 1;
       const items = Array.from({length: DRAFT_BOARD_SIZE}).map((_, i) => {
-          // Rewards based on Tier
           const rRand = Math.random();
           if (rRand < 0.2) return generateSupportCard('COMMON');
           if (rRand < 0.25) return generateSupportCard('RARE');
-          return generateCard(Object.keys(RARITIES)[Math.min(9, Math.floor(Math.random() * 3))]); // Simple tier logic
+          return generateCard(Object.keys(RARITIES)[Math.min(9, Math.floor(Math.random() * 3))]); 
       });
       
       setDraftBoard({ items, picksRemaining: picks, revealed: [], collected: [] });
@@ -818,15 +788,12 @@ export default function HoopsLegends() {
       
       setDraftBoard(prev => ({ ...prev, revealed: newRevealed, collected: newCollected, picksRemaining: prev.picksRemaining - 1 }));
 
-      // Add to inventory immediately
       if (newItem.type === 'SUPPORT') {
           setPlayer(p => ({ ...p, supportInventory: [...p.supportInventory, newItem] }));
       } else {
           setPlayer(p => ({ ...p, inventory: [...p.inventory, newItem] }));
       }
   };
-
-  // --- RENDERERS ---
 
   const renderStore = () => {
       return (
@@ -878,7 +845,6 @@ export default function HoopsLegends() {
                       </div>
                   </div>
 
-                  {/* GOD PACK */}
                   <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center gap-4 relative overflow-hidden group">
                       <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 to-purple-600/20 animate-pulse"></div>
                       <div className="w-24 h-32 bg-gradient-to-br from-red-600 to-purple-900 rounded-lg flex items-center justify-center shadow-lg border-2 border-red-400 z-10">
@@ -928,7 +894,6 @@ export default function HoopsLegends() {
 
   const renderMenu = () => (
     <div className="h-full flex flex-col bg-slate-900 text-white pb-32 relative">
-        {/* Header & Tier Bar */}
         <header className="p-4 bg-slate-800 border-b border-slate-700 shadow-lg z-10">
             <div className="flex justify-between items-start mb-4">
                 <div>
@@ -943,7 +908,6 @@ export default function HoopsLegends() {
                 </div>
             </div>
             
-            {/* Tier Progress Bar */}
             <div className="w-full bg-slate-900 rounded-full h-4 relative border border-slate-600">
                 <div className="bg-gradient-to-r from-orange-600 to-yellow-500 h-full rounded-full transition-all duration-1000" style={{width: `${tierInfo.progress}%`}}></div>
                 <div className="absolute inset-0 flex justify-between items-center px-2 text-[9px] font-bold uppercase tracking-wider">
@@ -959,146 +923,12 @@ export default function HoopsLegends() {
             </button>
             <button onClick={() => setGameState('DECK')} className="bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-col items-center justify-center gap-2 active:bg-slate-700"><Users size={32} className="text-blue-400" /><span className="font-bold">DECK</span></button>
             <button onClick={() => setGameState('CATALOGUE')} className="bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-col items-center justify-center gap-2 active:bg-slate-700"><Menu size={32} className="text-green-400" /><span className="font-bold">CARDS</span></button>
-            {/* Forge, Store, Settings etc... */}
             <button onClick={() => setGameState('FORGE')} className="bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-col items-center justify-center gap-2 active:bg-slate-700"><Hammer size={32} className="text-purple-400" /><span className="font-bold">FORGE</span></button>
             <button onClick={() => setGameState('STORE')} className="bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-col items-center justify-center gap-2 active:bg-slate-700"><ShoppingBag size={32} className="text-yellow-400" /><span className="font-bold">STORE</span></button>
-            
             <button onClick={() => setGameState('SETTINGS')} className="bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-col items-center justify-center gap-2 active:bg-slate-700"><Settings size={32} className="text-gray-400" /><span className="font-bold">SETTINGS</span></button>
         </div>
     </div>
   );
-
-  const renderDeckEdit = () => {
-      const availableCards = player.inventory.filter(c => !player.deck.includes(c.id)).sort((a,b) => b.level - a.level);
-      const availableSupports = player.supportInventory.filter(s => !player.activeSupport.includes(s.id));
-
-      const swapCard = (slotIdx, newId) => {
-          const newDeck = [...player.deck]; newDeck[slotIdx] = newId;
-          setPlayer(prev => ({...prev, deck: newDeck}));
-      };
-
-      const equipSupport = (slotIdx, supportId) => {
-          const newSupport = [...player.activeSupport];
-          if (newSupport.length <= slotIdx) newSupport.push(supportId);
-          else newSupport[slotIdx] = supportId;
-          setPlayer(prev => ({...prev, activeSupport: newSupport.slice(0, 2)})); // Max 2
-      };
-
-      return (
-          <div className="h-full flex flex-col bg-slate-900">
-              <header className="p-4 bg-slate-800 border-b border-slate-700"><h2 className="text-xl font-bold text-white">Edit Lineup</h2></header>
-              
-              <div className="p-2 bg-slate-800/50">
-                  <h3 className="text-white text-xs font-bold mb-2">PLAYERS (5)</h3>
-                  <div className="flex justify-center gap-1 overflow-x-auto pb-2">
-                      {player.deck.map((id, idx) => {
-                          const card = player.inventory.find(c => c.id === id);
-                          return <div key={idx} className="relative group w-[18%] min-w-[60px] flex justify-center">{card ? <Card card={card} size="sm" onClick={() => setSelectedCard({type:'PLAYER', idx, id})} isSelected={selectedCard?.idx === idx && selectedCard.type === 'PLAYER'} /> : <div className="w-full h-32 border-2 border-dashed border-gray-600 rounded"></div>}</div>;
-                      })}
-                  </div>
-                  
-                  <h3 className="text-white text-xs font-bold mb-2 mt-2">SUPPORT (2)</h3>
-                  <div className="flex justify-center gap-4">
-                      {[0, 1].map(idx => {
-                          const suppId = player.activeSupport[idx];
-                          const supp = player.supportInventory.find(s => s.id === suppId);
-                          return (
-                              <div key={idx} onClick={() => setSelectedCard({type:'SUPPORT', idx})} className={`w-16 h-16 border-2 border-dashed border-gray-600 rounded flex items-center justify-center ${selectedCard?.idx === idx && selectedCard.type === 'SUPPORT' ? 'border-white' : ''}`}>
-                                  {supp ? <div className={`text-[8px] text-center font-bold ${supp.color} p-1 rounded text-white`}>{supp.stat}+{supp.boost}</div> : <span className="text-gray-600 text-xs">+</span>}
-                              </div>
-                          )
-                      })}
-                  </div>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-2 grid grid-cols-5 gap-1 pb-32 place-items-center content-start">
-                  {selectedCard?.type === 'SUPPORT' ? (
-                      availableSupports.map(s => <SupportCardDisplay key={s.id} card={s} onClick={() => { equipSupport(selectedCard.idx, s.id); setSelectedCard(null); }} />)
-                  ) : (
-                      availableCards.map(c => <div key={c.id} className="w-full flex justify-center"><Card card={c} size="sm" onClick={() => { if (selectedCard?.type === 'PLAYER') { swapCard(selectedCard.idx, c.id); setSelectedCard(null); }}} /></div>)
-                  )}
-              </div>
-          </div>
-      )
-  };
-
-  // --- BATTLE LOGIC REFINEMENTS ---
-  const startBattle = (opponent) => {
-    const playerDeckCards = player.deck.map(id => player.inventory.find(c => c.id === id));
-    const activeSupports = player.activeSupport.map(id => player.supportInventory.find(s => s.id === id)).filter(Boolean);
-
-    setBattleState({
-      round: 0, playerScore: 0, aiScore: 0,
-      playerDeck: playerDeckCards, aiDeck: opponent.deck,
-      playerSupports: activeSupports,
-      opponent, usedPlayerIds: [], usedAiIds: [], log: [],
-      phase: 'SELECT_CARD', currentStat: null, isDuo: false
-    });
-    setGameState('BATTLE');
-    nextRoundInit({ round: 0, playerScore: 0, aiScore: 0 });
-  };
-
-  const nextRoundInit = (state) => {
-    const roundIdx = (battleState ? battleState.round : 0) + 1;
-    let isDuo = roundIdx === 2;
-    let stat = roundIdx === 4 ? 'ALL' : STAT_TYPES[Math.floor(Math.random() * STAT_TYPES.length)];
-    setBattleState(prev => ({ ...prev, round: roundIdx, phase: 'SELECT_CARD', currentStat: stat, isDuo, selection: [] }));
-  };
-
-  const playRound = (selectedIds) => {
-      // ... same as before but apply support bonuses
-      const { aiDeck, usedAiIds, currentStat, isDuo, playerSupports, playerDeck } = battleState;
-      const availableAi = aiDeck.filter(c => !usedAiIds.includes(c.id));
-      const aiPicks = availableAi.sort(() => 0.5 - Math.random()).slice(0, isDuo ? 2 : 1);
-      const playerPicks = selectedIds.map(id => playerDeck.find(c => c.id === id));
-
-      const getScore = (cards, supports) => cards.reduce((acc, c) => {
-          const stats = calculateCurrentStats(c, supports); // Pass supports here
-          if (currentStat === 'ALL') return acc + Object.values(stats).reduce((a,b)=>a+b,0);
-          return acc + stats[currentStat];
-      }, 0);
-
-      const pVal = getScore(playerPicks, playerSupports);
-      const aVal = getScore(aiPicks, []); // AI has no supports for now
-
-      let winner = 'DRAW';
-      if (pVal > aVal) winner = 'PLAYER';
-      if (aVal > pVal) winner = 'AI';
-      const pts = isDuo ? 2 : 1;
-
-      setBattleState(prev => ({
-          ...prev, phase: 'RESULT',
-          lastResult: { pCards: playerPicks, aCards: aiPicks, pVal, aVal, winner },
-          playerScore: prev.playerScore + (winner === 'PLAYER' ? pts : 0),
-          aiScore: prev.aiScore + (winner === 'AI' ? pts : 0),
-          usedPlayerIds: [...prev.usedPlayerIds, ...selectedIds],
-          usedAiIds: [...prev.usedAiIds, ...aiPicks.map(c=>c.id)]
-      }));
-  };
-
-  const resolveRound = () => {
-      const { playerScore, aiScore, round } = battleState;
-      let isOver = false, winner = null;
-      
-      // Win Logic
-      if (playerScore >= 3) { isOver = true; winner = 'PLAYER'; }
-      else if (aiScore >= 3) { isOver = true; winner = 'AI'; }
-      else if (round === 3 && playerScore !== aiScore) { isOver = true; winner = playerScore > aiScore ? 'PLAYER' : 'AI'; }
-      else if (round === 4) { isOver = true; winner = playerScore > aiScore ? 'PLAYER' : (aiScore > playerScore ? 'AI' : 'DRAW'); }
-
-      if (isOver) {
-          const win = winner === 'PLAYER';
-          setPlayer(prev => ({
-              ...prev,
-              coins: prev.coins + (win ? 50 : 15), // Updated Coins
-              record: { wins: prev.record.wins + (win?1:0), losses: prev.record.losses + (win?0:1) }
-          }));
-          // Go to Draft Board
-          generateDraftBoard(win);
-      } else {
-          nextRoundInit();
-      }
-  };
 
   const renderBattleSelection = () => {
       return (
@@ -1121,10 +951,83 @@ export default function HoopsLegends() {
       );
   };
 
+  const startBattle = (opponent) => {
+    const playerDeckCards = player.deck.map(id => player.inventory.find(c => c.id === id));
+    const activeSupports = player.activeSupport.map(id => player.supportInventory.find(s => s.id === id)).filter(Boolean);
+
+    setBattleState({
+      round: 0, playerScore: 0, aiScore: 0,
+      playerDeck: playerDeckCards, aiDeck: opponent.deck,
+      playerSupports: activeSupports,
+      opponent, usedPlayerIds: [], usedAiIds: [], log: [],
+      phase: 'SELECT_CARD', currentStat: null, isDuo: false
+    });
+    setGameState('BATTLE');
+    nextRoundInit({ round: 0, playerScore: 0, aiScore: 0 });
+  };
+
+  const nextRoundInit = (state) => {
+    const roundIdx = (state ? state.round : 0) + 1;
+    let isDuo = roundIdx === 2;
+    let stat = roundIdx === 4 ? 'ALL' : STAT_TYPES[Math.floor(Math.random() * STAT_TYPES.length)];
+    setBattleState(prev => ({ ...prev, round: roundIdx, phase: 'SELECT_CARD', currentStat: stat, isDuo, selection: [] }));
+  };
+
+  const playRound = (selectedIds) => {
+      const { aiDeck, usedAiIds, currentStat, isDuo, playerSupports, playerDeck } = battleState;
+      const availableAi = aiDeck.filter(c => !usedAiIds.includes(c.id));
+      const aiPicks = availableAi.sort(() => 0.5 - Math.random()).slice(0, isDuo ? 2 : 1);
+      const playerPicks = selectedIds.map(id => playerDeck.find(c => c.id === id));
+
+      const getScore = (cards, supports) => cards.reduce((acc, c) => {
+          const stats = calculateCurrentStats(c, supports);
+          if (currentStat === 'ALL') return acc + Object.values(stats).reduce((a,b)=>a+b,0);
+          return acc + stats[currentStat];
+      }, 0);
+
+      const pVal = getScore(playerPicks, playerSupports);
+      const aVal = getScore(aiPicks, []); 
+
+      let winner = 'DRAW';
+      if (pVal > aVal) winner = 'PLAYER';
+      if (aVal > pVal) winner = 'AI';
+      const pts = isDuo ? 2 : 1;
+
+      setBattleState(prev => ({
+          ...prev, phase: 'RESULT',
+          lastResult: { pCards: playerPicks, aCards: aiPicks, pVal, aVal, winner },
+          playerScore: prev.playerScore + (winner === 'PLAYER' ? pts : 0),
+          aiScore: prev.aiScore + (winner === 'AI' ? pts : 0),
+          usedPlayerIds: [...prev.usedPlayerIds, ...selectedIds],
+          usedAiIds: [...prev.usedAiIds, ...aiPicks.map(c=>c.id)]
+      }));
+  };
+
+  const resolveRound = () => {
+      const { playerScore, aiScore, round } = battleState;
+      let isOver = false, winner = null;
+      
+      if (playerScore >= 3) { isOver = true; winner = 'PLAYER'; }
+      else if (aiScore >= 3) { isOver = true; winner = 'AI'; }
+      else if (round === 3 && playerScore !== aiScore) { isOver = true; winner = playerScore > aiScore ? 'PLAYER' : 'AI'; }
+      else if (round === 4) { isOver = true; winner = playerScore > aiScore ? 'PLAYER' : (aiScore > playerScore ? 'AI' : 'DRAW'); }
+
+      if (isOver) {
+          const win = winner === 'PLAYER';
+          setPlayer(prev => ({
+              ...prev,
+              coins: prev.coins + (win ? 50 : 15), 
+              record: { wins: prev.record.wins + (win?1:0), losses: prev.record.losses + (win?0:1) }
+          }));
+          generateDraftBoard(win);
+      } else {
+          nextRoundInit({ round: battleState.round, playerScore: battleState.playerScore, aiScore: battleState.aiScore });
+      }
+  };
+
   const renderBattle = () => {
       if (!battleState) return null;
-      // Uses standard battle render logic (simplified for brevity in this block, assuming same structure as previous)
-      // Only significant change is passing playerSupports to calculate stats visually if needed
+      
       return (
         <div className="h-full bg-slate-900 flex flex-col relative overflow-hidden">
              <div className="bg-black/50 p-2 flex justify-between items-center text-white border-b border-slate-700">
@@ -1145,7 +1048,23 @@ export default function HoopsLegends() {
                      </div>
                  ) : (
                      <div className="w-full h-full flex flex-col justify-end pb-32">
-                         {/* Player Hand */}
+                         <div className="absolute top-0 left-0 w-full p-2 flex justify-center items-center gap-2 opacity-80">
+                             <div className="w-8 h-8 rounded-full bg-gray-600 overflow-hidden border border-gray-400">
+                                 <img src={battleState.opponent.avatar} alt="OPP" />
+                             </div>
+                             <span className="text-xs text-gray-300 font-bold">{battleState.opponent.name}</span>
+                         </div>
+
+                         <div className="absolute top-12 left-0 w-full flex justify-center gap-2 opacity-70">
+                             {battleState.aiDeck.filter(c => !battleState.usedAiIds.includes(c.id)).map((c, i) => (
+                                 <div key={i} className="w-16 h-24 bg-gradient-to-br from-gray-700 to-gray-900 border-2 border-gray-600 rounded-lg shadow-lg"></div>
+                             ))}
+                         </div>
+                         
+                         <div className="text-center mb-4 text-white text-sm animate-pulse mt-auto">
+                             Select {battleState.isDuo ? '2 Players' : '1 Player'} for {battleState.currentStat}
+                         </div>
+
                          <div className="flex justify-center gap-2 flex-wrap">
                              {battleState.playerDeck.map(card => {
                                  if (battleState.usedPlayerIds.includes(card.id)) return null;
@@ -1166,11 +1085,9 @@ export default function HoopsLegends() {
         </div>
       );
   };
-
-  // --- NAVIGATION ROUTER ---
   
   return (
-    <div className="w-full h-screen bg-slate-950 font-sans select-none overflow-hidden flex flex-col max-w-md mx-auto shadow-2xl border-x border-slate-800 relative">
+    <div className="w-full h-[100dvh] bg-slate-950 font-sans select-none overflow-hidden flex flex-col max-w-md mx-auto shadow-2xl border-x border-slate-800 relative sm:max-w-full sm:border-none sm:shadow-none">
       <div className="flex-1 overflow-hidden relative">
           {gameState === 'START' && (
               <div className="h-screen bg-slate-900 flex flex-col items-center justify-center text-white p-4">
@@ -1202,7 +1119,6 @@ export default function HoopsLegends() {
               </div>
           )}
       </div>
-      {/* Nav Bar */}
       {['MENU', 'DECK', 'CATALOGUE', 'STORE'].includes(gameState) && (
           <div className="absolute bottom-0 w-full bg-slate-900 border-t border-slate-800 p-4 flex justify-center gap-8 text-xs text-gray-400 z-50">
               <button onClick={() => setGameState('MENU')} className={`flex flex-col items-center gap-1 ${gameState === 'MENU' ? 'text-orange-500' : ''}`}><Menu size={20} /> Home</button>
@@ -1211,7 +1127,6 @@ export default function HoopsLegends() {
               <button onClick={() => setGameState('STORE')} className={`flex flex-col items-center gap-1 ${gameState === 'STORE' ? 'text-orange-500' : ''}`}><ShoppingBag size={20} /> Shop</button>
           </div>
       )}
-      {/* Pack Modal */}
       {packResult && <PackOpenModal cards={packResult} onClose={handleClosePack} />}
     </div>
   );
