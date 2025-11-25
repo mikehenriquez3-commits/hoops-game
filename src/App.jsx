@@ -42,11 +42,6 @@ const SUPPORT_TIERS = {
 const FIRST_NAMES = ["Le", "Ko", "Mi", "Sha", "Ste", "Ke", "Ti", "Ka", "Ky", "Ja", "Lu", "Gian", "Jo", "Chris", "Ant", "Dwi", "Dir", "Ha", "Wil", "Bil", "Mag", "Lar", "Kar", "Osc", "Jer", "Dav", "Pat", "Al", "Reg", "Den", "Sco", "Bar", "Vin", "Tra", "Zio", "De", "Jay", "Ty"];
 const LAST_NAMES = ["Bron", "Bry", "Jor", "One", "Cur", "Dur", "Dun", "Mal", "Irv", "Mor", "Don", "Nis", "Embi", "Pau", "Dav", "How", "Now", "Keem", "Cham", "Rus", "Joh", "Bir", "Jab", "Rob", "Wes", "Rob", "Ew", "Iv", "Mil", "Rod", "Pip", "Key", "Car", "You", "Wil", "Mar", "Roz", "Fox"];
 
-const PLAYER_IMAGES = [
-  "https://api.dicebear.com/9.x/pixel-art/svg?seed=Hoops1&backgroundColor=b6e3f4,c0aede,d1d4f9",
-  "https://api.dicebear.com/9.x/pixel-art/svg?seed=Hoops2&backgroundColor=ffdfbf,ffd5dc,d1d4f9"
-];
-
 const FALLBACK_IMAGE = "https://cdn-icons-png.flaticon.com/512/10709/10709766.png"; 
 
 // Helper for consistent identity
@@ -63,8 +58,9 @@ const TOTAL_PLAYERS_PER_TIER = 35;
 
 // --- UTILITY FUNCTIONS ---
 
-const getPlayerImage = (seed) => `https://api.dicebear.com/9.x/pixel-art/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
-const getGMImage = (seed) => `https://api.dicebear.com/9.x/avataaars/svg?seed=${seed}&backgroundColor=transparent`;
+// Updated to v7 for stability
+const getPlayerImage = (seed) => `https://api.dicebear.com/7.x/pixel-art/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
+const getGMImage = (seed) => `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&backgroundColor=transparent`;
 
 const generateCard = (rarityKey, forcedIndex = null) => {
   const rarity = RARITIES[rarityKey];
@@ -226,8 +222,9 @@ const Card = ({ card, size = "md", onClick, isSelected, showStats = true, dim = 
   const currentStats = calculateCurrentStats(card, activeSupports);
   const totalStats = Object.values(currentStats).reduce((a, b) => a + b, 0);
   
+  // Responsive card sizing
   const sizeClasses = {
-    sm: "w-[18%] min-w-[60px] h-32 text-[8px]",
+    sm: "w-full aspect-[2/3] text-[8px]",
     md: "w-32 h-48 text-xs",
     lg: "w-64 h-96 text-sm"
   };
@@ -257,6 +254,7 @@ const Card = ({ card, size = "md", onClick, isSelected, showStats = true, dim = 
             alt={card.name}
             className={`w-full h-full object-cover ${size === 'sm' ? 'scale-110' : ''}`}
             loading="lazy"
+            onError={(e) => { e.target.onerror = null; e.target.src = FALLBACK_IMAGE; }}
          />
          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
       </div>
@@ -320,7 +318,7 @@ const SupportCardDisplay = ({ card, onClick, isSelected }) => {
     return (
         <div 
             onClick={() => onClick && onClick(card)}
-            className={`w-[18%] min-w-[60px] h-24 rounded-md shadow-lg flex flex-col items-center justify-center p-1 text-center border-2 ${card.color} border-white/20 cursor-pointer ${isSelected ? 'ring-2 ring-white' : ''}`}
+            className={`w-full aspect-[2/3] rounded-md shadow-lg flex flex-col items-center justify-center p-1 text-center border-2 ${card.color} border-white/20 cursor-pointer ${isSelected ? 'ring-2 ring-white' : ''}`}
         >
             <Dna size={20} className="text-white mb-1" />
             <div className="text-white font-bold text-[8px] leading-tight">{card.name}</div>
@@ -359,7 +357,7 @@ const PackOpenModal = ({ cards, onClose }) => {
             <div className="flex flex-wrap justify-center gap-2 mb-8 max-h-[60vh] overflow-y-auto p-4 w-full">
                 {cards.map((card, i) => (
                     <div key={card.id || i} className="animate-in zoom-in slide-in-from-bottom-10 duration-500" style={{animationDelay: `${i * 100}ms`}}>
-                        <div className="transform scale-125 m-2">
+                        <div className="transform scale-125 m-2 w-24">
                              {card.type === 'SUPPORT' ? 
                                 <SupportCardDisplay card={card} /> : 
                                 <Card card={card} size="sm" showStats={true} />
@@ -425,7 +423,7 @@ const CatalogueView = ({ player, selectedCard, setSelectedCard, trainCard, combi
                 </div>
             </header>
 
-            <div className="flex-1 overflow-y-auto p-2 grid grid-cols-5 gap-1 pb-32 place-items-center">
+            <div className="flex-1 overflow-y-auto p-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-1 pb-32 place-items-center">
                {catalogueCards.map(card => {
                    const isLocked = card._status === 'LOCKED';
                    return (
@@ -544,7 +542,7 @@ const ForgeView = ({ player, forgeCards }) => {
 
             <div className="flex-1 overflow-y-auto p-4">
                 <h3 className="text-white text-sm font-bold mb-2">Available Maxed Cards</h3>
-                <div className="grid grid-cols-5 gap-1 pb-24 place-items-center">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-1 pb-24 place-items-center">
                     {forgeableCards.map(card => (
                         <div key={card.id} className="w-full flex justify-center">
                             <Card 
@@ -556,7 +554,7 @@ const ForgeView = ({ player, forgeCards }) => {
                             />
                         </div>
                     ))}
-                    {forgeableCards.length === 0 && <p className="text-gray-500 text-sm col-span-5 text-center py-4">No max level cards available.</p>}
+                    {forgeableCards.length === 0 && <p className="text-gray-500 text-sm col-span-full text-center py-4">No max level cards available.</p>}
                 </div>
             </div>
         </div>
@@ -868,7 +866,7 @@ export default function HoopsLegends() {
           <h2 className="text-2xl text-white font-black text-center mb-2">DRAFT BOARD</h2>
           <p className="text-center text-orange-400 mb-4">{draftBoard.picksRemaining} Picks Remaining</p>
           
-          <div className="grid grid-cols-5 gap-2 overflow-y-auto pb-20">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 overflow-y-auto pb-20">
               {draftBoard.items.map((item, i) => {
                   const isRevealed = draftBoard.revealed.includes(i);
                   return (
@@ -930,27 +928,61 @@ export default function HoopsLegends() {
     </div>
   );
 
-  const renderBattleSelection = () => {
+  const renderDeckEdit = () => {
+      const availableCards = player.inventory.filter(c => !player.deck.includes(c.id)).sort((a,b) => b.level - a.level);
+      const availableSupports = player.supportInventory.filter(s => !player.activeSupport.includes(s.id));
+
+      const swapCard = (slotIdx, newId) => {
+          const newDeck = [...player.deck]; newDeck[slotIdx] = newId;
+          setPlayer(prev => ({...prev, deck: newDeck}));
+      };
+
+      const equipSupport = (slotIdx, supportId) => {
+          const newSupport = [...player.activeSupport];
+          if (newSupport.length <= slotIdx) newSupport.push(supportId);
+          else newSupport[slotIdx] = supportId;
+          setPlayer(prev => ({...prev, activeSupport: newSupport.slice(0, 2)})); // Max 2
+      };
+
       return (
-          <div className="h-full bg-slate-900 flex flex-col p-6 overflow-y-auto">
-              <h2 className="text-3xl font-black italic text-white mb-2">CHALLENGE</h2>
-              <div className="space-y-4 pb-32">
-                  {opponents.map(opp => (
-                      <div key={opp.id} className="bg-slate-800 rounded-xl p-4 border border-slate-700 flex items-center gap-4 shadow-lg">
-                          <div className="w-16 h-16 rounded-full bg-gray-700 overflow-hidden"><img src={opp.avatar} alt="GM" /></div>
-                          <div className="flex-1">
-                              <h3 className="text-lg font-bold text-white">{opp.name}</h3>
-                              <div className="text-xs text-gray-400 mb-2">{opp.record.wins}W - {opp.record.losses}L</div>
-                              <Button onClick={() => startBattle(opp)} size="sm" className="w-full">BATTLE</Button>
-                          </div>
-                      </div>
-                  ))}
+          <div className="h-full flex flex-col bg-slate-900">
+              <header className="p-4 bg-slate-800 border-b border-slate-700"><h2 className="text-xl font-bold text-white">Edit Lineup</h2></header>
+              
+              <div className="p-2 bg-slate-800/50">
+                  <h3 className="text-white text-xs font-bold mb-2">PLAYERS (5)</h3>
+                  <div className="flex justify-center gap-1 overflow-x-auto pb-2">
+                      {player.deck.map((id, idx) => {
+                          const card = player.inventory.find(c => c.id === id);
+                          return <div key={idx} className="relative group w-[18%] min-w-[60px] flex justify-center">{card ? <Card card={card} size="sm" onClick={() => setSelectedCard({type:'PLAYER', idx, id})} isSelected={selectedCard?.idx === idx && selectedCard.type === 'PLAYER'} /> : <div className="w-full h-32 border-2 border-dashed border-gray-600 rounded"></div>}</div>;
+                      })}
+                  </div>
+                  
+                  <h3 className="text-white text-xs font-bold mb-2 mt-2">SUPPORT (2)</h3>
+                  <div className="flex justify-center gap-4">
+                      {[0, 1].map(idx => {
+                          const suppId = player.activeSupport[idx];
+                          const supp = player.supportInventory.find(s => s.id === suppId);
+                          return (
+                              <div key={idx} onClick={() => setSelectedCard({type:'SUPPORT', idx})} className={`w-16 h-16 border-2 border-dashed border-gray-600 rounded flex items-center justify-center ${selectedCard?.idx === idx && selectedCard.type === 'SUPPORT' ? 'border-white' : ''}`}>
+                                  {supp ? <div className={`text-[8px] text-center font-bold ${supp.color} p-1 rounded text-white`}>{supp.stat}+{supp.boost}</div> : <span className="text-gray-600 text-xs">+</span>}
+                              </div>
+                          )
+                      })}
+                  </div>
               </div>
-              <div className="absolute bottom-24 left-0 w-full flex justify-center"><Button onClick={() => setGameState('MENU')} variant="secondary" className="w-40">Back</Button></div>
+
+              <div className="flex-1 overflow-y-auto p-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-1 pb-32 place-items-center content-start">
+                  {selectedCard?.type === 'SUPPORT' ? (
+                      availableSupports.map(s => <SupportCardDisplay key={s.id} card={s} onClick={() => { equipSupport(selectedCard.idx, s.id); setSelectedCard(null); }} />)
+                  ) : (
+                      availableCards.map(c => <div key={c.id} className="w-full flex justify-center"><Card card={c} size="sm" onClick={() => { if (selectedCard?.type === 'PLAYER') { swapCard(selectedCard.idx, c.id); setSelectedCard(null); }}} /></div>)
+                  )}
+              </div>
           </div>
-      );
+      )
   };
 
+  // --- BATTLE LOGIC REFINEMENTS ---
   const startBattle = (opponent) => {
     const playerDeckCards = player.deck.map(id => player.inventory.find(c => c.id === id));
     const activeSupports = player.activeSupport.map(id => player.supportInventory.find(s => s.id === id)).filter(Boolean);
@@ -1025,6 +1057,27 @@ export default function HoopsLegends() {
       }
   };
 
+  const renderBattleSelection = () => {
+      return (
+          <div className="h-full bg-slate-900 flex flex-col p-6 overflow-y-auto">
+              <h2 className="text-3xl font-black italic text-white mb-2">CHALLENGE</h2>
+              <div className="space-y-4 pb-32">
+                  {opponents.map(opp => (
+                      <div key={opp.id} className="bg-slate-800 rounded-xl p-4 border border-slate-700 flex items-center gap-4 shadow-lg">
+                          <div className="w-16 h-16 rounded-full bg-gray-700 overflow-hidden"><img src={opp.avatar} alt="GM" /></div>
+                          <div className="flex-1">
+                              <h3 className="text-lg font-bold text-white">{opp.name}</h3>
+                              <div className="text-xs text-gray-400 mb-2">{opp.record.wins}W - {opp.record.losses}L</div>
+                              <Button onClick={() => startBattle(opp)} size="sm" className="w-full">BATTLE</Button>
+                          </div>
+                      </div>
+                  ))}
+              </div>
+              <div className="absolute bottom-24 left-0 w-full flex justify-center"><Button onClick={() => setGameState('MENU')} variant="secondary" className="w-40">Back</Button></div>
+          </div>
+      );
+  };
+
   const renderBattle = () => {
       if (!battleState) return null;
       
@@ -1087,7 +1140,8 @@ export default function HoopsLegends() {
   };
   
   return (
-    <div className="w-full h-[100dvh] bg-slate-950 font-sans select-none overflow-hidden flex flex-col max-w-md mx-auto shadow-2xl border-x border-slate-800 relative sm:max-w-full sm:border-none sm:shadow-none">
+    // UPDATED LAYOUT CONTAINER: Default full screen (w-full h-full) for mobile, constrained only on larger (md) screens.
+    <div className="w-full h-[100dvh] bg-slate-950 font-sans select-none overflow-hidden flex flex-col relative md:max-w-md md:mx-auto md:my-4 md:border md:border-slate-800 md:rounded-xl md:h-[90vh] md:shadow-2xl">
       <div className="flex-1 overflow-hidden relative">
           {gameState === 'START' && (
               <div className="h-screen bg-slate-900 flex flex-col items-center justify-center text-white p-4">
